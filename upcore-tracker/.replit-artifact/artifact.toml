@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "UPCore Club Tracker"
+version = "1.0.0"
+id = "artifacts/upcore-tracker"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 8081
+
+[services.development]
+run = "pnpm --filter @workspace/upcore-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/upcore-tracker", "run", "build" ]
+publicDir = "upcore-tracker/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "8081"
+BASE_PATH = "/"

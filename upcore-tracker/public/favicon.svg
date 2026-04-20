@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#000"/>
+  <g fill="#00c8ff" transform="translate(50,50)">
+    <!-- Spiral blade 1 -->
+    <path d="M0,0 C-5,-15 5,-28 15,-38 C8,-22 12,-10 0,0" opacity="0.9"/>
+    <!-- Spiral blade 2 -->
+    <path d="M0,0 C15,-5 28,5 38,15 C22,8 10,12 0,0" opacity="0.9"/>
+    <!-- Spiral blade 3 -->
+    <path d="M0,0 C5,15 -5,28 -15,38 C-8,22 -12,10 0,0" opacity="0.9"/>
+    <!-- Spiral blade 4 -->
+    <path d="M0,0 C-15,5 -28,-5 -38,-15 C-22,-8 -10,-12 0,0" opacity="0.9"/>
+    <!-- Center shield -->
+    <path d="M-7,-10 L-7,4 L0,9 L7,4 L7,-10 L4,-10 L4,2 L0,6 L-4,2 L-4,-10 Z" fill="#fff"/>
+    <path d="M-7,-10 L0,-5 L7,-10 Z" fill="#fff"/>
+  </g>
+</svg>
