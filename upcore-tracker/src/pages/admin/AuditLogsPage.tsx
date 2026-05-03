@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollText, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getStoredToken } from "@/context/AuthContext";
+import { getStoredToken } from "@/lib/auth-utils";
 import { getApiUrl } from "@/api";
 
 interface AuditRow {
