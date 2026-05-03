@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSearch, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useGetAllClubsOverview } from "@/api";
+import { useGetAllClubsOverview, getApiUrl } from "@/api";
 import {
   Search, Trophy, Users, Crown, Star,
   Shield, Zap, Swords, Loader2, Wifi, PiggyBank, Ticket,
@@ -151,7 +151,7 @@ function ClubDetailView({ tag, onBack }: { tag: string; onBack: () => void }) {
   const { data, isLoading, isError } = useQuery<ClubDetail>({
     queryKey: ["club-detail", tag],
     queryFn: async () => {
-      const res = await fetch(`/api/clubs/${encodeURIComponent(tag)}/overview`);
+      const res = await fetch(getApiUrl(`/api/clubs/${encodeURIComponent(tag)}/overview`));
       if (!res.ok) throw new Error("Not available");
       return res.json() as Promise<ClubDetail>;
     },
