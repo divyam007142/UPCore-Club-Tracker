@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ScrollText, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStoredToken } from "@/context/AuthContext";
+import { getApiUrl } from "@/api";
 
 interface AuditRow {
   id: string;
@@ -17,7 +18,7 @@ interface AuditRow {
 
 async function fetchAudit(): Promise<{ logs: AuditRow[]; total: number }> {
   const token = getStoredToken();
-  const res = await fetch("/api/audit-logs?limit=300", {
+  const res = await fetch(getApiUrl("/api/audit-logs?limit=300"), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error("Failed to load audit logs");
