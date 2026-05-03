@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy, Crown, Medal, Award, Users, Wifi, Lock, Unlock, Zap, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getApiUrl } from "@/api";
 
 interface LeaderboardRow {
   tag: string;
@@ -18,7 +19,7 @@ interface LeaderboardRow {
 }
 
 async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
-  const res = await fetch("/api/clubs/leaderboard");
+  const res = await fetch(getApiUrl("/api/clubs/leaderboard"));
   if (!res.ok) throw new Error("Failed to load leaderboard");
   return res.json();
 }
