@@ -3,6 +3,7 @@ import {
   Trophy, Users, CheckCircle, XCircle, Loader2,
   Search, Wifi, Lock, Unlock, AlertCircle, ChevronDown,
 } from "lucide-react";
+import { getApiUrl } from "@/api";
 
 interface Club {
   tag: string;
@@ -79,7 +80,7 @@ export default function JoinSuggestion({ clubs }: { clubs: Club[] }) {
 
     const encoded = encodeURIComponent(raw.startsWith("#") ? raw : `#${raw}`);
     try {
-      const res = await fetch(`/api/players/${encoded}`);
+      const res = await fetch(getApiUrl(`/api/players/${encoded}`));
       if (res.status === 429) {
         setErrorType("rate_limited");
         setError("BrawlTools API daily limit reached. Try again tomorrow.");
