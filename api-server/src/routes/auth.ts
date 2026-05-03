@@ -47,18 +47,37 @@ function serializeAdmin(doc: {
 }
 
 function getMailer() {
+  // Primary: Brevo SMTP relay — works from any cloud server IP (unlike Gmail direct SMTP).
+  // Sign up free at brevo.com → SMTP & API → copy login + generate SMTP key.
+  const brevoLogin = process.env.BREVO_SMTP_LOGIN;
+  const brevoKey   = process.env.BREVO_SMTP_KEY;
+  if (brevoLogin && brevoKey) {
+    return nodemailer.createTransport({
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      secure: false,
+      auth: { user: brevoLogin, pass: brevoKey },
+    });
+  }
+
+  // Fallback: Gmail direct SMTP (works locally; may be blocked by cloud hosts).
   const user = process.env.GMAIL_USER;
   const pass = process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
-  // Use port 587 + STARTTLS instead of service:"gmail" (port 465/SSL)
-  // because many cloud hosts (including Render) block outbound port 465.
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false,       // STARTTLS — upgrades after connection
+    secure: false,
     auth: { user, pass },
     tls: { rejectUnauthorized: false },
   });
+}
+
+function getFromAddress(): string {
+  const brevoLogin = process.env.BREVO_SMTP_LOGIN;
+  const gmail      = process.env.GMAIL_USER;
+  // Brevo lets you send from any verified sender — use Gmail address if available.
+  return gmail ?? brevoLogin ?? "noreply@upcore.gg";
 }
 
 /* ── Login ─────────────────────────────────────────────────────── */
@@ -185,7 +204,7 @@ router.post("/forgot-password", async (req, res) => {
   try {
     await Promise.race([
       mailer.sendMail({
-      from: `"UPCore Tracker" <${process.env.GMAIL_USER}>`,
+      from: `"UPCore Tracker" <${getFromAddress()}>`,
       to: email,
       subject: `UPCore — Password Reset Code for ${displayName}`,
       html: `<!DOCTYPE html>
