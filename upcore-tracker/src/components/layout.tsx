@@ -140,6 +140,11 @@ export function Layout({ children }: LayoutProps) {
     { href: "/stats",       label: "Stats",          icon: BarChart2 },
   ];
 
+  const infoItems = [
+    { href: "/about",   label: "About",   icon: Info },
+    { href: "/contact", label: "Contact", icon: Mail },
+  ];
+
   const allDrawerItems = [
     ...coreItems,
     { href: "/about",   label: "About",   icon: Info },
@@ -196,9 +201,13 @@ export function Layout({ children }: LayoutProps) {
             ))}
           </nav>
 
-          {/* xl (1280+): all 6 core + Login/Admin */}
+          {/* xl (1280+): all 6 core + About/Contact + Login/Admin */}
           <nav className="hidden xl:flex items-center">
             {coreItems.map((item) => (
+              <NavItem key={item.href} {...item} isActive={location === item.href} />
+            ))}
+            <div className="w-px h-4 bg-white/10 mx-1" />
+            {infoItems.map((item) => (
               <NavItem key={item.href} {...item} isActive={location === item.href} />
             ))}
             <div className="w-px h-4 bg-white/10 mx-1" />
