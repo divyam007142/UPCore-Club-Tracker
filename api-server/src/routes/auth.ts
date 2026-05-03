@@ -178,14 +178,13 @@ router.post("/forgot-password", async (req, res) => {
   const gmailUrl   = `${EMAIL_ASSET_BASE}/gmail-icon.png`;
 
   try {
-    await mailer.sendMail({
+    await Promise.race([
+      mailer.sendMail({
       from: `"UPCore Tracker" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: `UPCore — Password Reset Code for ${displayName}`,
-      html: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
+      html: `<!DOCTYPE html>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>UPCore Password Reset</title>
@@ -313,12 +312,50 @@ router.post("/forgot-password", async (req, res) => {
 </body>
 </html>
       `,
-    });
-  } catch {
-    res.status(500).json({ error: "Failed to send email" });
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Email send timed out")), 12000)
+      ),
+    ]);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to send email";
+    res.status(500).json({ error: `Failed to send email: ${msg}` });
     return;
   }
 
+  res.json({ success: true });
+});
+
+/* ── Change password (logged-in admin, requires current password) ── */
+router.post("/change-password", requireAdmin, async (req, res) => {
+  const body = req.body as { currentPassword?: unknown; newPassword?: unknown };
+  const currentPassword = typeof body?.currentPassword === "string" ? body.currentPassword : "";
+  const newPassword     = typeof body?.newPassword     === "string" ? body.newPassword     : "";
+
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ error: "Current and new password are required" });
+    return;
+  }
+  if (newPassword.length < 6) {
+    res.status(400).json({ error: "New password must be at least 6 characters" });
+    return;
+  }
+
+  const admin = await adminsCol.findOne({ email: req.admin!.email });
+  if (!admin) {
+    res.status(404).json({ error: "Admin not found" });
+    return;
+  }
+
+  const ok = await bcrypt.compare(currentPassword, admin.passwordHash);
+  if (!ok) {
+    res.status(401).json({ error: "Current password is incorrect" });
+    return;
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  await adminsCol.updateOne({ email: req.admin!.email }, { $set: { passwordHash: hash } });
+  await recordAudit(buildAdminPayload(admin), "auth.password_change", `Changed password from admin panel`);
   res.json({ success: true });
 });
 
