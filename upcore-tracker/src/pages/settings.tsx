@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "@/api";
 import {
   useGetTrackedClubs,
   useAddTrackedClub,
@@ -64,7 +65,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
 
 async function renameClub(tag: string, name: string): Promise<void> {
   const token = sessionStorage.getItem("upcore_admin_token");
-  const res = await fetch(`/api/clubs/${encodeURIComponent(tag)}/rename`, {
+  const res = await fetch(getApiUrl(`/api/clubs/${encodeURIComponent(tag)}/rename`), {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -80,7 +81,7 @@ async function renameClub(tag: string, name: string): Promise<void> {
 
 async function repollClub(tag: string): Promise<void> {
   const token = sessionStorage.getItem("upcore_admin_token");
-  const res = await fetch(`/api/clubs/${encodeURIComponent(tag)}/repoll`, {
+  const res = await fetch(getApiUrl(`/api/clubs/${encodeURIComponent(tag)}/repoll`), {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
