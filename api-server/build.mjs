@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, cp } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -117,6 +117,13 @@ globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
 globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
+  });
+
+  // Copy static assets (e.g. favicon.png used in email templates) into dist/
+  const srcAssets = path.resolve(artifactDir, "src/assets");
+  const distAssets = path.resolve(distDir, "assets");
+  await cp(srcAssets, distAssets, { recursive: true, force: true }).catch(() => {
+    // Assets folder may not exist — not a fatal error
   });
 }
 
