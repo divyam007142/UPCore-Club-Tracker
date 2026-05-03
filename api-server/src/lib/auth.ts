@@ -105,15 +105,11 @@ const SEED_ADMINS: SeedAdmin[] = [
 export async function seedAdmins(): Promise<void> {
   for (const a of SEED_ADMINS) {
     const email = a.email.toLowerCase();
-    const passwordHash = await bcrypt.hash(a.password, 10);
-    await adminsCol.updateOne(
-      { email },
-      {
-        $set: { passwordHash, name: a.name },
-        $setOnInsert: { email, createdAt: new Date() },
-      },
-      { upsert: true },
-    );
+    const existing = await adminsCol.findOne({ email });
+    if (!existing) {
+      const passwordHash = await bcrypt.hash(a.password, 10);
+      await adminsCol.insertOne({ email, name: a.name, passwordHash, createdAt: new Date() });
+    }
   }
-  logger.info({ count: SEED_ADMINS.length }, "Seeded admin accounts");
+  logger.info({ count: SEED_ADMINS.length }, "Seeded admin accounts (skipped existing)");
 }
