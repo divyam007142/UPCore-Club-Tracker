@@ -41,6 +41,52 @@ function stripMarkup(text: string) {
   return text.replace(/<[^>]+>/g, "").trim();
 }
 
+function iconUrl(iconId: number | null | undefined) {
+  if (!iconId) return null;
+  return `https://cdn.brawlify.com/profile-icons/regular/${iconId}.png`;
+}
+
+function badgeUrl(badgeId: number | null | undefined) {
+  if (!badgeId) return null;
+  return `https://cdn.brawlify.com/club-badges/regular/${badgeId}.png`;
+}
+
+function hexColor(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const hex = raw.replace(/^0x/i, "");
+  return hex.length >= 6 ? `#${hex.slice(-6)}` : undefined;
+}
+
+function MemberAvatar({
+  name, iconId, role, size = "sm",
+}: {
+  name: string;
+  iconId?: number | null;
+  role: string;
+  size?: "sm" | "md";
+}) {
+  const url = iconUrl(iconId);
+  const [err, setErr] = useState(false);
+  const sizeClass = size === "md" ? "w-9 h-9" : "w-7 h-7";
+  const textSize = size === "md" ? "text-xs" : "text-[10px]";
+
+  if (url && !err) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        onError={() => setErr(true)}
+        className={`${sizeClass} rounded-full object-cover shrink-0 border border-white/10`}
+      />
+    );
+  }
+  return (
+    <div className={`${sizeClass} rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0`}>
+      <span className={`${textSize} font-bold text-primary`}>{name[0]?.toUpperCase() ?? "?"}</span>
+    </div>
+  );
+}
+
 function MegaPigWinRate({ wins, played }: { wins: number; played: number }) {
   const rate = played > 0 ? Math.round((wins / played) * 100) : 0;
   return (
@@ -78,6 +124,9 @@ function ClubDetailModal({
     ? [...data.members].sort((a, b) => b.trophies - a.trophies)
     : [];
 
+  const badge = badgeUrl((data as any)?.badgeId);
+  const [badgeErr, setBadgeErr] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent
@@ -86,8 +135,18 @@ function ClubDetailModal({
       >
         <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
           <DialogHeader>
-            <DialogTitle className="font-display text-white tracking-wide flex items-center gap-2 text-lg">
-              <Shield className="w-5 h-5 text-primary shrink-0" />
+            <DialogTitle className="font-display text-white tracking-wide flex items-center gap-3 text-lg">
+              {/* Club badge image */}
+              {badge && !badgeErr ? (
+                <img
+                  src={badge}
+                  alt={name}
+                  onError={() => setBadgeErr(true)}
+                  className="w-8 h-8 object-contain shrink-0"
+                />
+              ) : (
+                <Shield className="w-5 h-5 text-primary shrink-0" />
+              )}
               <span className="truncate">{name}</span>
               {data?.tag && (
                 <span className="text-xs font-mono text-primary/70 font-normal">{data.tag}</span>
@@ -129,6 +188,7 @@ function ClubDetailModal({
 
         {data && (
           <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
+            {/* Stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {[
                 { icon: <Trophy className="w-3.5 h-3.5 text-amber-400" />, label: "Trophies", value: data.trophies.toLocaleString() },
@@ -189,6 +249,7 @@ function ClubDetailModal({
               </div>
             )}
 
+            {/* Capacity bar */}
             <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3">
               <div className="flex justify-between text-[11px] font-mono mb-2">
                 <span className="text-slate-400 uppercase tracking-wide">Capacity</span>
@@ -202,52 +263,229 @@ function ClubDetailModal({
               </div>
             </div>
 
+            {/* Member list with icons */}
             <div>
               <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
                 <Users className="w-3 h-3" /> Members ({sortedMembers.length}) — sorted by trophies
               </p>
               <div className="space-y-1">
-                {sortedMembers.map((m, i) => (
-                  <div
-                    key={m.tag}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/4 border border-white/8 hover:border-primary/30 transition-colors"
-                  >
-                    <span className="text-[11px] font-mono text-slate-500 w-5 text-right shrink-0">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-white font-semibold truncate">{m.name}</span>
-                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border font-bold ${roleColor(m.role)}`}>
-                          {formatRole(m.role)}
-                        </span>
-                        {m.brawlPass != null && m.brawlPass >= 0 && (
-                          <span className="text-[9px] font-mono text-violet-300 bg-violet-400/15 border border-violet-400/30 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                            <Ticket className="w-2.5 h-2.5" /> Pass
+                {sortedMembers.map((m, i) => {
+                  const nameColorCss = hexColor((m as any).nameColor);
+                  return (
+                    <div
+                      key={m.tag}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/4 border border-white/8 hover:border-primary/30 transition-colors"
+                    >
+                      <span className="text-[11px] font-mono text-slate-500 w-5 text-right shrink-0">{i + 1}</span>
+
+                      {/* Profile icon */}
+                      <MemberAvatar
+                        name={m.name}
+                        iconId={(m as any).iconId}
+                        role={m.role}
+                        size="sm"
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className="text-sm font-semibold truncate"
+                            style={{ color: nameColorCss ?? "#ffffff" }}
+                          >
+                            {m.name}
                           </span>
-                        )}
+                          <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border font-bold ${roleColor(m.role)}`}>
+                            {formatRole(m.role)}
+                          </span>
+                          {(m as any).brawlPass != null && (m as any).brawlPass >= 0 && (
+                            <span className="text-[9px] font-mono text-violet-300 bg-violet-400/15 border border-violet-400/30 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                              <Ticket className="w-2.5 h-2.5" /> Pass
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-500">{m.tag}</span>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-500">{m.tag}</span>
-                    </div>
-                    {m.megaPig && (
-                      <div className="text-right shrink-0 space-y-0.5">
-                        <p className="text-[10px] font-mono text-pink-400 font-semibold">{m.megaPig.wins} wins</p>
-                        <p className="text-[10px] font-mono text-slate-400 flex items-center justify-end gap-0.5">
-                          <Ticket className="w-2.5 h-2.5 shrink-0" />
-                          {m.megaPig.ticketsLeft} tickets
-                        </p>
+
+                      {m.megaPig && (
+                        <div className="text-right shrink-0 space-y-0.5">
+                          <p className="text-[10px] font-mono text-pink-400 font-semibold">{m.megaPig.wins} wins</p>
+                          <p className="text-[10px] font-mono text-slate-400 flex items-center justify-end gap-0.5">
+                            <Ticket className="w-2.5 h-2.5 shrink-0" />
+                            {m.megaPig.ticketsLeft} tickets
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Trophy className="w-2.5 h-2.5 text-amber-400" />
+                        <span className="text-xs font-mono text-white font-semibold">{m.trophies.toLocaleString()}</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Trophy className="w-2.5 h-2.5 text-amber-400" />
-                      <span className="text-xs font-mono text-white font-semibold">{m.trophies.toLocaleString()}</span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ClubCard({
+  club,
+  onSelect,
+}: {
+  club: ClubOverview & { loading?: boolean };
+  onSelect: () => void;
+}) {
+  const badgeId = (club as any).badgeId as number | null | undefined;
+  const badgeSrc = badgeUrl(badgeId);
+  const [bErr, setBErr] = useState(false);
+
+  if (club.loading) {
+    return (
+      <div className="bg-card border border-white/10 rounded-xl p-5 space-y-3 animate-pulse">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1.5 flex-1">
+            <div className="h-3.5 bg-white/10 rounded w-3/5" />
+            <div className="h-2.5 bg-white/6 rounded w-1/3" />
+          </div>
+        </div>
+        <div className="flex gap-1.5">
+          <div className="h-5 w-10 bg-white/8 rounded-full" />
+          <div className="h-5 w-16 bg-white/8 rounded-full" />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-14 bg-white/6 rounded-lg" />
+          <div className="h-14 bg-white/6 rounded-lg" />
+        </div>
+        <div className="h-8 bg-white/6 rounded-lg" />
+        <div className="h-8 bg-amber-400/6 border border-amber-400/10 rounded-lg" />
+        <div className="h-1 bg-white/10 rounded-full mt-1" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={onSelect}
+      className="bg-card border border-white/10 rounded-xl p-5 hover:border-primary/50 hover:bg-card/80 transition-all group relative overflow-hidden cursor-pointer"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {badgeSrc && !bErr ? (
+            <img
+              src={badgeSrc}
+              alt={club.name}
+              onError={() => setBErr(true)}
+              className="w-8 h-8 object-contain shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4 text-primary/60" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <h3 className="font-display font-bold text-white text-sm tracking-wide group-hover:text-primary transition-colors truncate">
+              {club.name}
+            </h3>
+            <p className="text-[11px] font-mono text-primary/70 mt-0.5">{club.tag}</p>
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors shrink-0 mt-0.5 ml-1" />
+      </div>
+
+      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+        {club.regionName && (
+          <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/8 border border-white/15 text-slate-300">
+            <Globe className="w-2.5 h-2.5 text-slate-400" /> {club.regionName}
+          </span>
+        )}
+        {club.type && (
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-white/15 text-slate-300 uppercase bg-white/8">
+            {club.type}
+          </span>
+        )}
+        {club.online > 0 && (
+          <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-400/12 border border-emerald-400/30 text-emerald-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {club.online} online
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="bg-white/6 rounded-lg p-2.5 border border-white/10">
+          <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-mono uppercase tracking-wide">
+            <Trophy className="w-2.5 h-2.5 text-amber-400" /> Trophies
+          </div>
+          <div className="font-display font-bold text-white text-base leading-none">
+            {club.trophies.toLocaleString()}
+          </div>
+        </div>
+        <div className="bg-white/6 rounded-lg p-2.5 border border-white/10">
+          <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-mono uppercase tracking-wide">
+            <Users className="w-2.5 h-2.5 text-primary" /> Members
+          </div>
+          <div className="font-display font-bold text-white text-base leading-none">
+            {club.memberCount}
+            <span className="text-[11px] text-slate-400 font-mono font-normal"> / 30</span>
+          </div>
+        </div>
+      </div>
+
+      {club.megaPig && (
+        <div className="bg-white/6 border border-white/10 rounded-lg px-2.5 py-2 mb-3 flex items-center gap-2">
+          <Star className="w-3 h-3 text-pink-400 shrink-0" />
+          <span className="text-[10px] font-mono text-slate-400 flex-1">Mega Pig</span>
+          <span className="text-xs font-mono text-emerald-400 font-bold">{club.megaPig.totalWins}W</span>
+          <span className="text-[10px] font-mono text-slate-400">/ {club.megaPig.totalPlayed}P</span>
+          <span className="text-[11px] font-mono text-pink-400 font-bold">
+            {club.megaPig.totalPlayed > 0
+              ? `${Math.round((club.megaPig.totalWins / club.megaPig.totalPlayed) * 100)}%`
+              : "—"}
+          </span>
+        </div>
+      )}
+
+      {club.president && (
+        <div className="flex items-center gap-1.5 text-[11px] bg-amber-400/8 border border-amber-400/25 rounded-lg px-2.5 py-1.5">
+          <Crown className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+          <span className="text-amber-300 font-mono font-semibold truncate flex-1">{club.president}</span>
+          <span className="text-slate-500 font-mono shrink-0 text-[10px]">President</span>
+        </div>
+      )}
+
+      {/* Member avatar strip */}
+      {(club as any).members?.length > 0 && (
+        <div className="flex items-center mt-3 -space-x-1.5">
+          {((club as any).members as Array<{ name: string; iconId?: number | null; role: string }>)
+            .slice(0, 8)
+            .map((m, idx) => (
+              <MemberAvatar key={idx} name={m.name} iconId={m.iconId} role={m.role} size="sm" />
+            ))}
+          {(club as any).members.length > 8 && (
+            <div className="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+              <span className="text-[9px] font-mono text-slate-400">
+                +{(club as any).members.length - 8}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-3">
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-700"
+            style={{ width: `${(club.memberCount / 30) * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -267,7 +505,6 @@ export default function Overview() {
 
   const [selectedClub, setSelectedClub] = useState<{ tag: string; name: string } | null>(null);
 
-  /* ── Auto-retry while any club is still loading ─────────────────── */
   const hasLoadingClubs = !!clubs?.some((c: ClubOverview & { loading?: boolean }) => c.loading);
   useEffect(() => {
     if (!hasLoadingClubs) return;
@@ -275,7 +512,6 @@ export default function Overview() {
     return () => clearTimeout(timer);
   }, [hasLoadingClubs, clubs, refetch]);
 
-  /* ── Refresh-button overlay ──────────────────────────────────────── */
   const { triggerTransition } = usePageTransition();
   const manualRefreshing = useRef(false);
 
@@ -331,125 +567,19 @@ export default function Overview() {
           </button>
         </div>
 
-        {/* Club Cards Grid — no opacity changes, no jitter */}
+        {/* Club Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-52 rounded-xl" />
               ))
-            : clubs?.map((club: ClubOverview & { loading?: boolean }) => {
-                if (club.loading) {
-                  return (
-                    <div key={club.tag} className="bg-card border border-white/10 rounded-xl p-5 space-y-3 animate-pulse">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1.5 flex-1">
-                          <div className="h-3.5 bg-white/10 rounded w-3/5" />
-                          <div className="h-2.5 bg-white/6 rounded w-1/3" />
-                        </div>
-                      </div>
-                      <div className="flex gap-1.5">
-                        <div className="h-5 w-10 bg-white/8 rounded-full" />
-                        <div className="h-5 w-16 bg-white/8 rounded-full" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="h-14 bg-white/6 rounded-lg" />
-                        <div className="h-14 bg-white/6 rounded-lg" />
-                      </div>
-                      <div className="h-8 bg-white/6 rounded-lg" />
-                      <div className="h-8 bg-amber-400/6 border border-amber-400/10 rounded-lg" />
-                      <div className="h-1 bg-white/10 rounded-full mt-1" />
-                    </div>
-                  );
-                }
-                return (
-                  <div
-                    key={club.tag}
-                    onClick={() => setSelectedClub({ tag: club.tag, name: club.name })}
-                    className="bg-card border border-white/10 rounded-xl p-5 hover:border-primary/50 hover:bg-card/80 transition-all group relative overflow-hidden cursor-pointer"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-display font-bold text-white text-sm tracking-wide group-hover:text-primary transition-colors truncate">
-                          {club.name}
-                        </h3>
-                        <p className="text-[11px] font-mono text-primary/70 mt-0.5">{club.tag}</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors shrink-0 mt-0.5" />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                      {club.regionName && (
-                        <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/8 border border-white/15 text-slate-300">
-                          <Globe className="w-2.5 h-2.5 text-slate-400" /> {club.regionName}
-                        </span>
-                      )}
-                      {club.type && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-white/15 text-slate-300 uppercase bg-white/8">
-                          {club.type}
-                        </span>
-                      )}
-                      {club.online > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-400/12 border border-emerald-400/30 text-emerald-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          {club.online} online
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="bg-white/6 rounded-lg p-2.5 border border-white/10">
-                        <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-mono uppercase tracking-wide">
-                          <Trophy className="w-2.5 h-2.5 text-amber-400" /> Trophies
-                        </div>
-                        <div className="font-display font-bold text-white text-base leading-none">
-                          {club.trophies.toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="bg-white/6 rounded-lg p-2.5 border border-white/10">
-                        <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1 font-mono uppercase tracking-wide">
-                          <Users className="w-2.5 h-2.5 text-primary" /> Members
-                        </div>
-                        <div className="font-display font-bold text-white text-base leading-none">
-                          {club.memberCount}
-                          <span className="text-[11px] text-slate-400 font-mono font-normal"> / 30</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {club.megaPig && (
-                      <div className="bg-white/6 border border-white/10 rounded-lg px-2.5 py-2 mb-3 flex items-center gap-2">
-                        <Star className="w-3 h-3 text-pink-400 shrink-0" />
-                        <span className="text-[10px] font-mono text-slate-400 flex-1">Mega Pig</span>
-                        <span className="text-xs font-mono text-emerald-400 font-bold">{club.megaPig.totalWins}W</span>
-                        <span className="text-[10px] font-mono text-slate-400">/ {club.megaPig.totalPlayed}P</span>
-                        <span className="text-[11px] font-mono text-pink-400 font-bold">
-                          {club.megaPig.totalPlayed > 0
-                            ? `${Math.round((club.megaPig.totalWins / club.megaPig.totalPlayed) * 100)}%`
-                            : "—"}
-                        </span>
-                      </div>
-                    )}
-
-                    {club.president && (
-                      <div className="flex items-center gap-1.5 text-[11px] bg-amber-400/8 border border-amber-400/25 rounded-lg px-2.5 py-1.5">
-                        <Crown className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                        <span className="text-amber-300 font-mono font-semibold truncate flex-1">{club.president}</span>
-                        <span className="text-slate-500 font-mono shrink-0 text-[10px]">President</span>
-                      </div>
-                    )}
-
-                    <div className="mt-3">
-                      <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all duration-700"
-                          style={{ width: `${(club.memberCount / 30) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            : clubs?.map((club: ClubOverview & { loading?: boolean }) => (
+                <ClubCard
+                  key={club.tag}
+                  club={club}
+                  onSelect={() => setSelectedClub({ tag: club.tag, name: club.name })}
+                />
+              ))}
         </div>
 
         {selectedClub && (
