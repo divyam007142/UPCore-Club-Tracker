@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getStoredToken } from "@/context/AuthContext";
+import { getStoredToken } from "@/lib/auth-utils";
 import { getApiUrl } from "@/api";
 import {
   CheckCircle2, XCircle, AlertCircle, Database, Globe, Radio,
