@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getStoredToken } from "@/context/AuthContext";
+import { getApiUrl } from "@/api";
 import {
   CheckCircle2, XCircle, AlertCircle, Database, Globe, Radio,
   Clock, Activity, RefreshCw, Server, Trophy, ScrollText, Zap,
@@ -17,7 +18,7 @@ interface ApiStatus {
 
 async function fetchStatus(): Promise<ApiStatus> {
   const token = getStoredToken();
-  const res = await fetch("/api/api-status", {
+  const res = await fetch(getApiUrl("/api/api-status"), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error("Failed to fetch status");
