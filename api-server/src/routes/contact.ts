@@ -69,69 +69,52 @@ router.post("/", async (req, res) => {
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>New Contact Message</title>
 </head>
-<body style="margin:0;padding:0;background:#080808;font-family:Arial,sans-serif;">
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#080808">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f0f2f5">
   <tr>
-    <td align="center" style="padding:48px 20px;">
+    <td align="center" style="padding:40px 20px;">
 
       <!-- Card -->
-      <table width="520" cellpadding="0" cellspacing="0" bgcolor="#0f0f0f"
-             style="max-width:520px;width:100%;border:1px solid #1e1e1e;">
+      <table width="560" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+             style="max-width:560px;width:100%;border-radius:4px;border:1px solid #dde1e7;overflow:hidden;">
 
-        <!-- Top accent -->
+        <!-- Dark branded header -->
         <tr>
-          <td height="2" bgcolor="#555555" style="height:2px;font-size:0;line-height:0;">&nbsp;</td>
-        </tr>
-
-        <!-- Brand header -->
-        <tr>
-          <td align="center" style="padding:32px 40px 20px;">
-            <p style="margin:0 0 6px;font-size:9px;letter-spacing:7px;text-transform:uppercase;
-                      color:#555555;font-family:'Courier New',Courier,monospace;">UPCORE ESPORTS</p>
-            <p style="margin:0;font-size:24px;letter-spacing:8px;text-transform:uppercase;
+          <td align="center" bgcolor="#0d0d0d" style="padding:28px 40px 24px;background:#0d0d0d;">
+            <p style="margin:0 0 5px;font-size:9px;letter-spacing:6px;text-transform:uppercase;
+                      color:#888888;font-family:'Courier New',Courier,monospace;">UPCORE ESPORTS</p>
+            <p style="margin:0;font-size:22px;letter-spacing:7px;text-transform:uppercase;
                       color:#ffffff;font-family:Arial Black,Arial,sans-serif;font-weight:900;">TRACKER</p>
+            <p style="margin:10px 0 0;font-size:10px;letter-spacing:4px;text-transform:uppercase;
+                      color:#00b4ff;font-family:'Courier New',Courier,monospace;">New Contact Message</p>
           </td>
         </tr>
-
-        <!-- Divider -->
-        <tr><td height="1" bgcolor="#1c1c1c" style="height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>
-
-        <!-- Message type label -->
-        <tr>
-          <td align="center" style="padding:22px 40px 14px;">
-            <p style="margin:0;font-size:10px;letter-spacing:5px;text-transform:uppercase;
-                      color:#555555;font-family:'Courier New',Courier,monospace;">New Contact Message</p>
-          </td>
-        </tr>
-
-        <!-- Divider -->
-        <tr><td height="1" bgcolor="#1c1c1c" style="height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>
 
         <!-- Sender details -->
         <tr>
-          <td style="padding:22px 40px 8px;">
+          <td style="padding:28px 36px 8px;">
             <table cellpadding="0" cellspacing="0" width="100%">
               <tr>
-                <td style="padding-bottom:12px;">
-                  <p style="margin:0 0 3px;font-size:9px;letter-spacing:3px;text-transform:uppercase;
-                             color:#444444;font-family:'Courier New',Courier,monospace;">From</p>
-                  <p style="margin:0;font-size:14px;font-weight:700;color:#dddddd;font-family:Arial,sans-serif;">${safeName}</p>
-                  <p style="margin:2px 0 0;font-size:11px;color:#555555;font-family:'Courier New',Courier,monospace;">${safeEmail}</p>
+                <td style="padding-bottom:16px;">
+                  <p style="margin:0 0 4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+                             color:#888888;font-family:'Courier New',Courier,monospace;">From</p>
+                  <p style="margin:0;font-size:15px;font-weight:700;color:#111111;font-family:Arial,sans-serif;">${safeName}</p>
+                  <p style="margin:3px 0 0;font-size:12px;color:#555555;font-family:'Courier New',Courier,monospace;">${safeEmail}</p>
                 </td>
               </tr>
               <tr>
-                <td style="padding-bottom:12px;">
-                  <p style="margin:0 0 3px;font-size:9px;letter-spacing:3px;text-transform:uppercase;
-                             color:#444444;font-family:'Courier New',Courier,monospace;">Subject</p>
-                  <p style="margin:0;font-size:13px;color:#cccccc;font-family:Arial,sans-serif;">${safeSubject}</p>
+                <td style="padding-bottom:16px;">
+                  <p style="margin:0 0 4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+                             color:#888888;font-family:'Courier New',Courier,monospace;">Subject</p>
+                  <p style="margin:0;font-size:14px;font-weight:600;color:#222222;font-family:Arial,sans-serif;">${safeSubject}</p>
                 </td>
               </tr>
               <tr>
-                <td>
-                  <p style="margin:0 0 3px;font-size:9px;letter-spacing:3px;text-transform:uppercase;
-                             color:#444444;font-family:'Courier New',Courier,monospace;">Received</p>
-                  <p style="margin:0;font-size:11px;color:#555555;font-family:'Courier New',Courier,monospace;">
+                <td style="padding-bottom:4px;">
+                  <p style="margin:0 0 4px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+                             color:#888888;font-family:'Courier New',Courier,monospace;">Received</p>
+                  <p style="margin:0;font-size:12px;color:#666666;font-family:'Courier New',Courier,monospace;">
                     ${receivedAt.toUTCString()}
                   </p>
                 </td>
@@ -141,18 +124,18 @@ router.post("/", async (req, res) => {
         </tr>
 
         <!-- Divider -->
-        <tr><td height="1" bgcolor="#1c1c1c" style="height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td height="1" bgcolor="#e8eaed" style="height:1px;font-size:0;line-height:0;margin:0 36px;">&nbsp;</td></tr>
 
         <!-- Message body -->
         <tr>
-          <td style="padding:22px 40px 26px;">
-            <p style="margin:0 0 10px;font-size:9px;letter-spacing:3px;text-transform:uppercase;
-                       color:#444444;font-family:'Courier New',Courier,monospace;">Message</p>
-            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#0a0a0a"
-                   style="border:1px solid #1e1e1e;">
+          <td style="padding:24px 36px 28px;">
+            <p style="margin:0 0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+                       color:#888888;font-family:'Courier New',Courier,monospace;">Message</p>
+            <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#f7f8fa"
+                   style="border:1px solid #dde1e7;border-radius:3px;">
               <tr>
-                <td style="padding:16px 18px;font-size:13px;color:#aaaaaa;
-                            font-family:Arial,sans-serif;line-height:1.75;">
+                <td style="padding:16px 20px;font-size:14px;color:#222222;
+                            font-family:Arial,sans-serif;line-height:1.8;">
                   ${safeMessage}
                 </td>
               </tr>
@@ -162,13 +145,13 @@ router.post("/", async (req, res) => {
 
         <!-- Reply hint -->
         <tr>
-          <td style="padding:0 40px 22px;">
+          <td style="padding:0 36px 28px;">
             <table cellpadding="0" cellspacing="0" width="100%">
               <tr>
-                <td width="3" bgcolor="#2e2e2e" style="width:3px;">&nbsp;</td>
+                <td width="3" bgcolor="#00b4ff" style="width:3px;border-radius:2px;">&nbsp;</td>
                 <td style="padding-left:14px;">
-                  <p style="margin:0;font-size:11px;color:#444444;font-family:Arial,sans-serif;line-height:1.6;">
-                    Reply directly to this email to respond to <strong style="color:#666666;">${safeName}</strong> at <strong style="color:#666666;">${safeEmail}</strong>.
+                  <p style="margin:0;font-size:12px;color:#555555;font-family:Arial,sans-serif;line-height:1.7;">
+                    Reply directly to this email to respond to <strong style="color:#111111;">${safeName}</strong> at <strong style="color:#111111;">${safeEmail}</strong>.
                   </p>
                 </td>
               </tr>
@@ -176,15 +159,12 @@ router.post("/", async (req, res) => {
           </td>
         </tr>
 
-        <!-- Divider -->
-        <tr><td height="1" bgcolor="#1c1c1c" style="height:1px;font-size:0;line-height:0;">&nbsp;</td></tr>
-
-        <!-- Footer -->
+        <!-- Dark footer -->
         <tr>
-          <td align="center" style="padding:16px 40px 20px;">
-            <p style="margin:0 0 5px;font-size:10px;letter-spacing:3px;text-transform:uppercase;
-                      color:#333333;font-family:'Courier New',Courier,monospace;">#RISEUP &middot; UPCORE TRACKER</p>
-            <p style="margin:0;font-size:10px;color:#2e2e2e;font-family:Arial,sans-serif;">
+          <td align="center" bgcolor="#0d0d0d" style="padding:16px 36px 18px;background:#0d0d0d;">
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+                      color:#555555;font-family:'Courier New',Courier,monospace;">#RISEUP &middot; UPCORE TRACKER</p>
+            <p style="margin:0;font-size:11px;color:#444444;font-family:Arial,sans-serif;">
               &copy; ${year} UPCore Esports. All rights reserved.
             </p>
           </td>
