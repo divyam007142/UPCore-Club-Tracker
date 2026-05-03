@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { setAuthTokenGetter } from "@/api";
+import { setAuthTokenGetter, getApiUrl } from "@/api";
 
 export const TOKEN_KEY = "upcore_admin_token";
 const ADMIN_KEY = "upcore_admin_info";
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch(getApiUrl("/api/auth/login"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedToken = sessionStorage.getItem(TOKEN_KEY);
     // Fire-and-forget: record logout audit log on the backend
     if (storedToken) {
-      void fetch("/api/auth/logout", {
+      void fetch(getApiUrl("/api/auth/logout"), {
         method: "POST",
         headers: { Authorization: `Bearer ${storedToken}` },
       }).catch(() => { /* ignore network errors during logout */ });
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     playerTag?: string;
   }) => {
     const storedToken = sessionStorage.getItem(TOKEN_KEY);
-    const res = await fetch("/api/auth/profile", {
+    const res = await fetch(getApiUrl("/api/auth/profile"), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
