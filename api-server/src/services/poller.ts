@@ -30,6 +30,9 @@ export async function pollClub(clubTag: string, clubName: string): Promise<void>
       // BrawlTools rate-limited or down — fall back to official Brawl Stars API
       const bsClub = await getClubFromOfficialAPI(clubTag);
       if (!bsClub) throw btErr; // re-throw original so the outer catch logs it
+      // Preserve the last known online count from cache — official BS API doesn't provide it
+      const existing = clubDataCache.get(clubTag);
+      if (existing?.online) bsClub.online = existing.online;
       club = bsClub;
       fromBrawlTools = false;
       logger.info({ clubTag }, "BrawlTools unavailable — serving from official BS API");
