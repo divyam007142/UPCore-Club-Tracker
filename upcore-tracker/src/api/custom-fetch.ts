@@ -30,6 +30,16 @@ export function setBaseUrl(url: string | null): void {
 }
 
 /**
+ * Resolve a relative API path against the configured base URL.
+ * Use this for any raw `fetch("/api/...")` call so the request
+ * reaches the correct backend in every environment.
+ */
+export function getApiUrl(path: string): string {
+  if (_baseUrl && path.startsWith("/")) return `${_baseUrl}${path}`;
+  return path;
+}
+
+/**
  * Register a getter that supplies a bearer auth token.  Before every fetch
  * the getter is invoked; when it returns a non-null string, an
  * `Authorization: Bearer <token>` header is attached to the request.
