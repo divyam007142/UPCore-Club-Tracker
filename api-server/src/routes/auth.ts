@@ -50,9 +50,14 @@ function getMailer() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD;
   if (!user || !pass) return null;
+  // Use port 587 + STARTTLS instead of service:"gmail" (port 465/SSL)
+  // because many cloud hosts (including Render) block outbound port 465.
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,       // STARTTLS — upgrades after connection
     auth: { user, pass },
+    tls: { rejectUnauthorized: false },
   });
 }
 
