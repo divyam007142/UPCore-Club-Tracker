@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Mail, MapPin, Send, CheckCircle, AlertCircle, Loader2, Phone } from "lucide-react";
 import { motion } from "framer-motion";
+import { getApiUrl } from "@/api";
 
 const CONTACT_EMAIL = "officialecoleaf@gmail.com";
 
@@ -24,7 +25,7 @@ export default function Contact() {
     setStatus("loading");
     setErrorMsg("");
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(getApiUrl("/api/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
