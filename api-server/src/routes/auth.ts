@@ -57,6 +57,9 @@ function getMailer() {
       port: 587,
       secure: false,
       auth: { user: brevoLogin, pass: brevoKey },
+      connectionTimeout: 10000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
     });
   }
 
@@ -70,7 +73,16 @@ function getMailer() {
     secure: false,
     auth: { user, pass },
     tls: { rejectUnauthorized: false },
+    connectionTimeout: 10000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
   });
+}
+
+function getActiveMailerLabel(): string {
+  if (process.env.BREVO_SMTP_LOGIN && process.env.BREVO_SMTP_KEY) return "brevo";
+  if (process.env.GMAIL_USER && (process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD)) return "gmail";
+  return "none";
 }
 
 function getFromAddress(): string {
@@ -343,7 +355,8 @@ router.post("/forgot-password", async (req, res) => {
     ]);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to send email";
-    res.status(500).json({ error: `Failed to send email: ${msg}` });
+    const provider = getActiveMailerLabel();
+    res.status(500).json({ error: `Failed to send email [${provider}]: ${msg}` });
     return;
   }
 
