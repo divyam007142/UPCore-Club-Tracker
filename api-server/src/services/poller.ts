@@ -2,7 +2,9 @@ import { trackedClubsCol, clubLogsCol, clubSnapshotsCol, ClubLogDoc } from "../d
 import { getClub, getPlayer, getClubFromOfficialAPI, BSClub } from "./brawlstars";
 import { logger } from "../lib/logger";
 
-const POLL_INTERVAL_MS = 5 * 60 * 1000;
+// 45 min keeps us under BrawlTools free tier daily limit of 500 req/day
+// (14 clubs × 32 polls/day = 448 req/day)
+const POLL_INTERVAL_MS = 45 * 60 * 1000;
 
 interface MemberSnapshot {
   role: string;
