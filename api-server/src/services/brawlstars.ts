@@ -204,6 +204,76 @@ export async function getPlayer(tag: string): Promise<BSPlayer | null> {
   }
 }
 
+/**
+ * Fetch a player's info directly from the official Brawl Stars API.
+ * Returns null on any error so callers can fall back gracefully.
+ * Requires BRAWL_STARS_API_KEY env var and the server IP whitelisted in the BS dev portal.
+ */
+export async function getPlayerFromOfficialAPI(tag: string): Promise<BSPlayer | null> {
+  const apiKey = process.env.BRAWL_STARS_API_KEY;
+  if (!apiKey) return null;
+  const encoded = encodeTag(tag);
+  const url = `${BS_API_BASE}/players/${encoded}`;
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${apiKey}` },
+    });
+    if (!res.ok) {
+      logger.warn({ status: res.status, url }, "Official BS API player error");
+      return null;
+    }
+    const d = (await res.json()) as {
+      tag: string;
+      name: string;
+      nameColor?: string;
+      icon?: { id: number };
+      trophies: number;
+      highestTrophies?: number;
+      expLevel?: number;
+      expPoints?: number;
+      soloVictories?: number;
+      duoVictories?: number;
+      "3vs3Victories"?: number;
+      bestRoboRumbleTime?: number;
+      bestTimeAsBigBrawler?: number;
+      brawlers?: Array<{
+        id: number; name: string; power: number; rank: number;
+        trophies: number; highestTrophies: number;
+        gears?: Array<{ id: number; name: string; level: number }>;
+        starPowers?: Array<{ id: number; name: string }>;
+        gadgets?: Array<{ id: number; name: string }>;
+      }>;
+      club?: { tag: string; name: string };
+    };
+    const brawlers = d.brawlers?.map(b => ({
+      id: b.id, name: b.name, power: b.power, rank: b.rank,
+      trophies: b.trophies, highestTrophies: b.highestTrophies,
+      gears: b.gears, starPowers: b.starPowers, gadgets: b.gadgets,
+    }));
+    return {
+      tag: d.tag,
+      name: d.name,
+      nameColor: d.nameColor,
+      icon: d.icon,
+      trophies: d.trophies,
+      highestTrophies: d.highestTrophies,
+      expLevel: d.expLevel,
+      expPoints: d.expPoints,
+      soloVictories: d.soloVictories,
+      duoVictories: d.duoVictories,
+      trioVictories: d["3vs3Victories"],
+      bestRoboRumbleTime: d.bestRoboRumbleTime,
+      bestTimeAsBigBrawler: d.bestTimeAsBigBrawler,
+      brawlers,
+      brawlersUnlocked: brawlers?.length,
+      club: d.club,
+    };
+  } catch (err) {
+    logger.warn({ err, tag }, "Failed to fetch player from official BS API");
+    return null;
+  }
+}
+
 export async function getClubMembers(tag: string): Promise<BSMember[]> {
   const club = await getClub(tag);
   return club.members ?? [];
