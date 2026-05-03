@@ -7,7 +7,7 @@ import {
   Users, Activity, ScrollText, Settings as SettingsIcon, Trophy,
   ArrowRight, TrendingUp, Radio, UserCircle, Server,
 } from "lucide-react";
-import { getStoredToken } from "@/context/AuthContext";
+import { getStoredToken } from "@/lib/auth-utils";
 
 interface AuditRow {
   id: string;
