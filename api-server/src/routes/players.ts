@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getPlayer, BrawlToolsRateLimitError } from "../services/brawlstars";
+import { getPlayer, getPlayerFromOfficialAPI, BrawlToolsRateLimitError } from "../services/brawlstars";
 import z from "zod";
 
 const router = Router();
@@ -24,6 +24,12 @@ router.get("/:tag", async (req, res) => {
     res.json(player);
   } catch (err) {
     if (err instanceof BrawlToolsRateLimitError) {
+      // BrawlTools rate-limited — fall back to official BS API
+      const fallback = await getPlayerFromOfficialAPI(tag);
+      if (fallback) {
+        res.json({ ...fallback, _source: "official" });
+        return;
+      }
       res.status(429).json({ error: "BrawlTools API daily limit reached. Player lookups will resume tomorrow." });
       return;
     }
