@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { getApiUrl } from "@/api";
+import { getStoredToken } from "@/lib/auth-utils";
 import {
   UserCircle, Camera, Tag, Save, Check, AlertCircle, Loader2, ExternalLink,
+  Lock, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -15,6 +18,39 @@ export default function ProfilePage() {
   const [saved, setSaved]     = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const [imgErr, setImgErr]   = useState(false);
+
+  const [currentPass, setCurrentPass]   = useState("");
+  const [newPass, setNewPass]           = useState("");
+  const [confirmPass, setConfirmPass]   = useState("");
+  const [showCurrent, setShowCurrent]   = useState(false);
+  const [showNew, setShowNew]           = useState(false);
+  const [showConfirm, setShowConfirm]   = useState(false);
+  const [pwSaving, setPwSaving]         = useState(false);
+  const [pwSaved, setPwSaved]           = useState(false);
+  const [pwError, setPwError]           = useState<string | null>(null);
+
+  const handleChangePassword = async () => {
+    setPwError(null);
+    if (newPass !== confirmPass) { setPwError("New passwords do not match"); return; }
+    if (newPass.length < 6) { setPwError("New password must be at least 6 characters"); return; }
+    setPwSaving(true);
+    try {
+      const res = await fetch(getApiUrl("/api/auth/change-password"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getStoredToken()}` },
+        body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      setPwSaved(true);
+      setCurrentPass(""); setNewPass(""); setConfirmPass("");
+      setTimeout(() => setPwSaved(false), 3000);
+    } catch (e) {
+      setPwError(e instanceof Error ? e.message : "Failed to change password");
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   // Sync when admin changes (e.g. fresh login)
   useEffect(() => {
@@ -203,6 +239,95 @@ export default function ProfilePage() {
         <p>• These changes are applied immediately — no need to log out and back in.</p>
         <p>• Your player tag is stored for reference only and is not used for any tracking.</p>
       </div>
+
+      {/* ── Change Password ── */}
+      <div>
+        <h2 className="font-display text-xl font-black tracking-wider uppercase text-white flex items-center gap-2 mt-2">
+          <ShieldCheck className="w-5 h-5 text-primary" />
+          Change Password
+        </h2>
+        <p className="text-xs font-mono text-muted-foreground mt-1">
+          Update your login password. You must enter your current password to confirm.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border/50">
+        {/* Current password */}
+        <div className="p-4">
+          <label className="block text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+            Current Password
+          </label>
+          <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5 focus-within:border-primary/50 transition-colors">
+            <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <input
+              type={showCurrent ? "text" : "password"}
+              placeholder="••••••••"
+              value={currentPass}
+              onChange={e => setCurrentPass(e.target.value)}
+              className="bg-transparent text-sm text-white placeholder-muted-foreground/50 font-mono focus:outline-none w-full"
+            />
+            <button type="button" onClick={() => setShowCurrent(v => !v)} className="text-muted-foreground hover:text-white transition-colors shrink-0">
+              {showCurrent ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* New password */}
+        <div className="p-4">
+          <label className="block text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+            New Password
+          </label>
+          <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5 focus-within:border-primary/50 transition-colors">
+            <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <input
+              type={showNew ? "text" : "password"}
+              placeholder="Min. 6 characters"
+              value={newPass}
+              onChange={e => setNewPass(e.target.value)}
+              className="bg-transparent text-sm text-white placeholder-muted-foreground/50 font-mono focus:outline-none w-full"
+            />
+            <button type="button" onClick={() => setShowNew(v => !v)} className="text-muted-foreground hover:text-white transition-colors shrink-0">
+              {showNew ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirm new password */}
+        <div className="p-4">
+          <label className="block text-xs font-mono text-muted-foreground uppercase tracking-widest mb-2">
+            Confirm New Password
+          </label>
+          <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2.5 focus-within:border-primary/50 transition-colors">
+            <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <input
+              type={showConfirm ? "text" : "password"}
+              placeholder="Repeat new password"
+              value={confirmPass}
+              onChange={e => setConfirmPass(e.target.value)}
+              className="bg-transparent text-sm text-white placeholder-muted-foreground/50 font-mono focus:outline-none w-full"
+            />
+            <button type="button" onClick={() => setShowConfirm(v => !v)} className="text-muted-foreground hover:text-white transition-colors shrink-0">
+              {showConfirm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {pwError && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <p className="text-xs font-mono">{pwError}</p>
+        </div>
+      )}
+
+      <button
+        onClick={handleChangePassword}
+        disabled={pwSaving || !currentPass || !newPass || !confirmPass}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-background font-mono text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {pwSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : pwSaved ? <Check className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+        {pwSaving ? "Updating…" : pwSaved ? "Password Updated!" : "Update Password"}
+      </button>
     </div>
   );
 }
