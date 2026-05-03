@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import path from "path";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
@@ -30,9 +31,32 @@ app.use(
     },
   }),
 );
-app.use(cors());
+const ALLOWED_ORIGINS = new Set([
+  "https://upcore-club-tracker.pages.dev",
+  ...(process.env.EXTRA_CORS_ORIGINS ?? "").split(",").filter(Boolean),
+]);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // Allow same-origin requests (no Origin header) and all *.replit.* dev domains
+      if (!origin || origin.includes(".replit.") || ALLOWED_ORIGINS.has(origin)) {
+        cb(null, true);
+      } else {
+        cb(null, false);
+      }
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve email assets publicly so Gmail can load them as HTTPS image URLs
+app.use("/email-assets", express.static(path.join(__dirname, "assets"), {
+  maxAge: "7d",
+  immutable: false,
+}));
 
 app.use("/api", router);
 
