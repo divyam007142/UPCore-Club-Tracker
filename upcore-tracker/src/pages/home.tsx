@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useGetLogsSummary } from "../api";
+import { useGetLogsSummary, getApiUrl } from "../api";
 import { useGetAllClubsOverview } from "../api";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -141,7 +141,7 @@ function PlayerLookup() {
     queryKey: ["player-lookup", searchTag],
     queryFn: async () => {
       const tag = (searchTag ?? "").replace(/^#?/, "#");
-      const res = await fetch(`/api/players/${encodeURIComponent(tag)}`);
+      const res = await fetch(getApiUrl(`/api/players/${encodeURIComponent(tag)}`));
       if (res.status === 429) throw new Error("rate_limited");
       if (res.status === 404) throw new Error("not_found");
       if (!res.ok) throw new Error("fetch_error");
