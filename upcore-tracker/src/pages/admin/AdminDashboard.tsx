@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/context/AuthContext";
-import { useGetTrackedClubs, useGetLogsSummary } from "@/api";
+import { useGetTrackedClubs, useGetLogsSummary, getApiUrl } from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users, Activity, ScrollText, Settings as SettingsIcon, Trophy,
@@ -22,7 +22,7 @@ interface AuditRow {
 
 async function fetchRecentAudit(): Promise<{ logs: AuditRow[]; total: number }> {
   const token = getStoredToken();
-  const res = await fetch("/api/audit-logs?limit=6", {
+  const res = await fetch(getApiUrl("/api/audit-logs?limit=6"), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error("Failed to load audit logs");
