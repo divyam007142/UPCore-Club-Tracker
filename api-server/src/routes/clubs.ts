@@ -297,7 +297,20 @@ router.get("/:tag/overview", async (req, res) => {
     return;
   }
 
-  // 3. Genuinely no data yet (new club, never polled successfully)
+  // 3. Try official BS API as last resort (works once server IP is whitelisted)
+  const bsClub = await getClubFromOfficialAPI(tag);
+  if (bsClub) {
+    // Persist for future requests
+    void clubSnapshotsCol.updateOne(
+      { tag },
+      { $set: { tag, data: bsClub as unknown as Record<string, unknown>, savedAt: new Date() } },
+      { upsert: true },
+    );
+    res.json({ ...serializeClubOverview(bsClub, dbClub?.name), stale: true });
+    return;
+  }
+
+  // 4. Genuinely no data yet (new club, never polled successfully)
   res.status(503).json({ error: "Club data not yet available. Poller is still warming up." });
 });
 
