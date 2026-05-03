@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { getApiUrl } from "@/api";
 import {
   Lock, Mail, Loader2, AlertCircle, Eye, EyeOff, ArrowRight, ArrowLeft,
   CheckCircle2, Menu, X,
@@ -244,7 +245,7 @@ export default function Login() {
     setForgotErr(null);
     setForgotLoading(true);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(getApiUrl("/api/auth/forgot-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail.trim() }),
@@ -267,7 +268,7 @@ export default function Login() {
     setVerifyStatus("checking");
     setVerifyErr(null);
     try {
-      const res = await fetch("/api/auth/verify-otp", {
+      const res = await fetch(getApiUrl("/api/auth/verify-otp"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail.trim(), otp: code }),
@@ -300,7 +301,7 @@ export default function Login() {
     }
     setResetLoading(true);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(getApiUrl("/api/auth/reset-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail.trim(), otp: digits.join(""), newPassword: newPass }),
