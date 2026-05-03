@@ -1,7 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { connectDb } from "./db";
+import { connectDb, trackedClubsCol } from "./db";
 import { runPoller } from "./services/poller";
+import { seedAdmins } from "./lib/auth";
 
 const rawPort = process.env["PORT"];
 
@@ -25,8 +26,28 @@ async function getPublicIp(): Promise<string> {
   }
 }
 
+async function runMigrations() {
+  const renames: Array<{ from: string; to: string }> = [
+    { from: "UPC Heroes",  to: "UPCore Heroes"  },
+    { from: "UPC Paradise", to: "UPCore Paradise" },
+    { from: "UPC Elites",  to: "UPCore Elite"   },
+    { from: "UPC Main",    to: "UPCore eSports"  },
+  ];
+  for (const { from, to } of renames) {
+    const result = await trackedClubsCol.updateOne(
+      { name: from },
+      { $set: { name: to, updatedAt: new Date() } },
+    );
+    if (result.modifiedCount > 0) {
+      logger.info({ from, to }, "Migrated club name");
+    }
+  }
+}
+
 async function start() {
   await connectDb();
+  await seedAdmins();
+  await runMigrations();
   app.listen(port, async (err) => {
     if (err) {
       logger.error({ err }, "Error listening on port");
