@@ -9,8 +9,10 @@ export default function GifTransitionOverlay() {
 
   useEffect(() => {
     if (location === prevLocation.current) return;
+    const from = prevLocation.current;
     prevLocation.current = location;
-    triggerTransition(1400);
+    if (location.startsWith("/admin") || from.startsWith("/admin")) return;
+    triggerTransition(900);
   }, [location, triggerTransition]);
 
   return null;
