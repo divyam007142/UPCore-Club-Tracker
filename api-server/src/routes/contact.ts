@@ -1,6 +1,5 @@
 import { Router } from "express";
 import z from "zod";
-import nodemailer from "nodemailer";
 import { contactMessagesCol } from "../db/index";
 
 const router = Router();
@@ -14,14 +13,28 @@ const ContactBody = z.object({
   message: z.string().min(1).max(5000),
 });
 
-function getMailer() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass },
-  });
+async function sendContactEmail(subject: string, html: string): Promise<void> {
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  const fromEmail = process.env.GMAIL_USER ?? "noreply@upcore.gg";
+  if (brevoApiKey) {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": brevoApiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "UPCore Tracker", email: fromEmail },
+        to: [{ email: CONTACT_RECIPIENT }],
+        subject,
+        htmlContent: html,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Brevo API ${res.status}: ${body.slice(0, 200)}`);
+    }
+    return;
+  }
+  // Fallback: no email service configured — message is saved to DB only
 }
 
 router.post("/", async (req, res) => {
@@ -41,20 +54,14 @@ router.post("/", async (req, res) => {
     read: false,
   });
 
-  // Send email notification to the contact recipient
-  const mailer = getMailer();
-  if (mailer) {
+  // Send email notification via Brevo REST API
+  try {
     const safeSubject = subject.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const safeName    = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const safeEmail   = email.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const safeMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
 
-    void mailer.sendMail({
-      from: `"UPCore Tracker" <${process.env.GMAIL_USER}>`,
-      to: CONTACT_RECIPIENT,
-      replyTo: email,
-      subject: `[UPCore Contact] ${subject}`,
-      html: `
+    await sendContactEmail(`[UPCore Contact] ${subject}`, `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -191,8 +198,9 @@ router.post("/", async (req, res) => {
 
 </body>
 </html>
-      `,
-    });
+      `);
+  } catch (_err) {
+    // Email failed but message is already saved to DB — don't fail the request
   }
 
   res.json({ success: true });
