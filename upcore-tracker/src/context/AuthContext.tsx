@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { setAuthTokenGetter, getApiUrl } from "@/api";
+import { TOKEN_KEY } from "@/lib/auth-utils";
 
-export const TOKEN_KEY = "upcore_admin_token";
 const ADMIN_KEY = "upcore_admin_info";
 
 export interface AdminInfo {
@@ -22,12 +22,6 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-// Session lives in sessionStorage — cleared on tab close / page refresh.
-// The JWT itself expires after 8 hours as an additional security boundary.
-export function getStoredToken(): string | null {
-  try { return sessionStorage.getItem(TOKEN_KEY); } catch { return null; }
-}
 
 function readSession(): { token: string; admin: AdminInfo } | null {
   try {
