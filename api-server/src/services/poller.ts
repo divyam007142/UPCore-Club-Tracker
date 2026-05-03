@@ -2,9 +2,11 @@ import { trackedClubsCol, clubLogsCol, clubSnapshotsCol, ClubLogDoc } from "../d
 import { getClub, getPlayer, getClubFromOfficialAPI, BSClub } from "./brawlstars";
 import { logger } from "../lib/logger";
 
-// 45 min keeps us under BrawlTools free tier daily limit of 500 req/day
-// (14 clubs × 32 polls/day = 448 req/day)
-const POLL_INTERVAL_MS = 45 * 60 * 1000;
+// Default: 45 min keeps us under BrawlTools free tier daily limit of 500 req/day
+// (14 clubs × 32 polls/day = 448 req/day).
+// Set POLL_INTERVAL_MINS=15 in Render env vars when BrawlTools rate limits are removed.
+const POLL_INTERVAL_MINS = Math.max(1, parseInt(process.env.POLL_INTERVAL_MINS ?? "45", 10));
+const POLL_INTERVAL_MS = POLL_INTERVAL_MINS * 60 * 1000;
 
 interface MemberSnapshot {
   role: string;
