@@ -46,28 +46,35 @@ function serializeAdmin(doc: {
   };
 }
 
-function getMailer() {
-  // Primary: Brevo SMTP relay — works from any cloud server IP (unlike Gmail direct SMTP).
-  // Sign up free at brevo.com → SMTP & API → copy login + generate SMTP key.
-  const brevoLogin = process.env.BREVO_SMTP_LOGIN;
-  const brevoKey   = process.env.BREVO_SMTP_KEY;
-  if (brevoLogin && brevoKey) {
-    return nodemailer.createTransport({
-      host: "smtp-relay.brevo.com",
-      port: 587,
-      secure: false,
-      auth: { user: brevoLogin, pass: brevoKey },
-      connectionTimeout: 10000,
-      greetingTimeout: 8000,
-      socketTimeout: 10000,
+// Send email via Brevo REST API (HTTPS/443 — never blocked by cloud hosts)
+// or fall back to Gmail SMTP for local dev.
+async function sendOtpEmail(to: string, subject: string, html: string): Promise<void> {
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  if (brevoApiKey) {
+    const fromEmail = process.env.GMAIL_USER ?? "noreply@upcore.gg";
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": brevoApiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "UPCore Tracker", email: fromEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
+      signal: AbortSignal.timeout(15000),
     });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Brevo API ${res.status}: ${body.slice(0, 200)}`);
+    }
+    return;
   }
 
-  // Fallback: Gmail direct SMTP (works locally; may be blocked by cloud hosts).
+  // Fallback: Gmail direct SMTP (works in local dev; blocked by most cloud hosts).
   const user = process.env.GMAIL_USER;
   const pass = process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
-  return nodemailer.createTransport({
+  if (!user || !pass) throw new Error("Email service not configured — set BREVO_API_KEY");
+  const mailer = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
@@ -77,19 +84,7 @@ function getMailer() {
     greetingTimeout: 8000,
     socketTimeout: 10000,
   });
-}
-
-function getActiveMailerLabel(): string {
-  if (process.env.BREVO_SMTP_LOGIN && process.env.BREVO_SMTP_KEY) return "brevo";
-  if (process.env.GMAIL_USER && (process.env.APP_PASSWORD ?? process.env.GMAIL_APP_PASSWORD)) return "gmail";
-  return "none";
-}
-
-function getFromAddress(): string {
-  const brevoLogin = process.env.BREVO_SMTP_LOGIN;
-  const gmail      = process.env.GMAIL_USER;
-  // Brevo lets you send from any verified sender — use Gmail address if available.
-  return gmail ?? brevoLogin ?? "noreply@upcore.gg";
+  await mailer.sendMail({ from: `"UPCore Tracker" <${user}>`, to, subject, html });
 }
 
 /* ── Login ─────────────────────────────────────────────────────── */
@@ -191,12 +186,6 @@ router.post("/forgot-password", async (req, res) => {
     { upsert: true },
   );
 
-  const mailer = getMailer();
-  if (!mailer) {
-    res.status(503).json({ error: "Email service not configured" });
-    return;
-  }
-
   const displayName = (admin.displayName?.trim() || admin.name?.trim() || email.split("@")[0]);
   const year = new Date().getFullYear();
   // Individual digit cells — table row never wraps regardless of email client width
@@ -213,13 +202,7 @@ router.post("/forgot-password", async (req, res) => {
   const twitterUrl = `${EMAIL_ASSET_BASE}/twitter-icon.png`;
   const gmailUrl   = `${EMAIL_ASSET_BASE}/gmail-icon.png`;
 
-  try {
-    await Promise.race([
-      mailer.sendMail({
-      from: `"UPCore Tracker" <${getFromAddress()}>`,
-      to: email,
-      subject: `UPCore — Password Reset Code for ${displayName}`,
-      html: `<!DOCTYPE html>
+  const emailHtml = `<!DOCTYPE html>
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -347,16 +330,17 @@ router.post("/forgot-password", async (req, res) => {
 
 </body>
 </html>
-      `,
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Email send timed out")), 12000)
-      ),
-    ]);
+      `;
+
+  try {
+    await sendOtpEmail(
+      email,
+      `UPCore — Password Reset Code for ${displayName}`,
+      emailHtml,
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to send email";
-    const provider = getActiveMailerLabel();
-    res.status(500).json({ error: `Failed to send email [${provider}]: ${msg}` });
+    res.status(500).json({ error: `Failed to send email: ${msg}` });
     return;
   }
 
